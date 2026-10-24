@@ -1,7 +1,130 @@
 import { AxeResults, Result } from 'axe-core';
+import { chromium } from 'playwright';
 
 export function formatAxeResultsAsJson(results: AxeResults): string {
   return JSON.stringify(results, null, 2);
+}
+
+function generateHtmlReport(results: AxeResults): string {
+  let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Audit Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 20px; }
+        h1, h2, h3 { color: #0056b3; }
+        h1 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .violation { border: 1px solid #e00; padding: 15px; margin-bottom: 15px; border-radius: 5px; background-color: #ffe0e0; }
+        .violation h3 { color: #e00; margin-top: 0; }
+        .pass { color: #0a0; }
+        .incomplete { color: #ffa500; }
+        .inapplicable { color: #888; }
+    </style>
+</head>
+<body>
+    <h1>Accessibility Audit Report</h1>
+
+`;
+
+  if (results.violations.length > 0) {
+    html += `    <h2>Violations</h2>
+`;
+    results.violations.forEach((violation: Result) => {
+      html += `    <div class="violation">
+        <h3>[${violation.id}] ${violation.help}</h3>
+        <p><strong>Impact</strong>: ${violation.impact || 'N/A'}</p>
+        <p><strong>Description</strong>: ${violation.description}</p>
+        <p><strong>Help URL</strong>: <a href="${violation.helpUrl}">${violation.helpUrl}</a></p>
+        <p><strong>Nodes</strong>:</p>
+        <ul>
+`;
+      violation.nodes.forEach(node => {
+        html += `            <li>
+                <p><strong>HTML</strong>:</p><pre><code>${escapeHtml(node.html)}</code></pre>
+                <p><strong>Target</strong>: <code>${escapeHtml(node.target.join(', '))}</code></p>
+`;
+        if (node.failureSummary) {
+          html += `                <p><strong>Failure Summary</strong>: ${escapeHtml(node.failureSummary)}</p>
+`;
+        }
+        html += `            </li>
+`;
+      });
+      html += `        </ul>
+    </div>
+`;
+    });
+  } else {
+    html += `    <h2>No Accessibility Violations Found! 🎉</h2>
+`;
+  }
+
+  if (results.passes.length > 0) {
+    html += `    <h2>Passes</h2>
+    <ul>
+`;
+    results.passes.forEach((pass: Result) => {
+      html += `        <li class="pass">[${pass.id}] ${pass.help}</li>
+`;
+    });
+    html += `    </ul>
+`;
+  }
+
+  if (results.incomplete.length > 0) {
+    html += `    <h2>Incomplete</h2>
+    <ul>
+`;
+    results.incomplete.forEach((incomplete: Result) => {
+      html += `        <li class="incomplete">[${incomplete.id}] ${incomplete.help}</li>
+`;
+    });
+    html += `    </ul>
+`;
+  }
+
+  if (results.inapplicable.length > 0) {
+    html += `    <h2>Inapplicable</h2>
+    <ul>
+`;
+    results.inapplicable.forEach((inapplicable: Result) => {
+      html += `        <li class="inapplicable">[${inapplicable.id}] ${inapplicable.help}</li>
+`;
+    });
+    html += `    </ul>
+`;
+  }
+
+  html += `</body>
+</html>`;
+  return html;
+}
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export async function formatAxeResultsAsPdf(results: AxeResults, filePath: string): Promise<void> {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+
+  const htmlContent = generateHtmlReport(results);
+
+  await page.setContent(htmlContent, { waitUntil: 'networkidle' });
+
+  await page.pdf({ path: filePath, format: 'A4' });
+
+  await browser.close();
 }
 
 export function formatAxeResultsAsGitHubPRMarkdown(results: AxeResults): string {

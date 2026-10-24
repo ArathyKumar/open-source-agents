@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { auditPage } from './core/audit';
-import { formatAxeResultsAsJson, formatAxeResultsAsGitHubPRMarkdown } from './core/reporter';
+import { formatAxeResultsAsJson, formatAxeResultsAsGitHubPRMarkdown, formatAxeResultsAsPdf } from './core/reporter';
 import { suggestA11yFix, applyA11yFix } from './agent/ai-fixer';
 import { mapDomToSource } from './agent/mapper';
 
@@ -13,12 +13,20 @@ program
 
 program.command('audit <url>')
   .description('Audits a given URL for accessibility issues')
-  .option('-f, --format <type>', 'Output format: json or markdown', 'json')
+  .option('-f, --format <type>', 'Output format: json, markdown, or pdf', 'json')
+  .option('-o, --output <path>', 'Output file path for PDF reports')
   .action(async (url, options) => {
     console.log(`Auditing ${url}...`);
     const results = await auditPage(url);
     if (options.format === 'markdown') {
       console.log(formatAxeResultsAsGitHubPRMarkdown(results));
+    } else if (options.format === 'pdf') {
+      if (!options.output) {
+        console.error('Error: --output option is required for PDF format.');
+        process.exit(1);
+      }
+      await formatAxeResultsAsPdf(results, options.output);
+      console.log(`PDF report saved to ${options.output}`);
     } else {
       console.log(formatAxeResultsAsJson(results));
     }

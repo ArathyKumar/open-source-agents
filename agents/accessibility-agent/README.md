@@ -5,7 +5,7 @@ This project implements an end-to-end Accessibility CI/CD Audit & Remediation Ag
 ## Features
 
 - **Accessibility Auditing**: Headless Playwright integration with `@axe-core/playwright` for comprehensive WCAG 2.1 & 2.2 AA scanning.
-- **Report Generation**: Parses AxeResults into structured JSON summaries and GitHub PR Markdown tables for easy review.
+- **Report Generation**: Parses AxeResults into structured JSON summaries, GitHub PR Markdown tables, and PDF reports for easy review.
 - **AI Remediation**: Utilizes the Gemini API (`gemini-2.5-pro`) to suggest and apply accessibility fixes.
 - **Code Mapping**: Scans the workspace to map DOM selectors and HTML snippets to their corresponding source files.
 - **MCP Server**: Provides a local Model Context Protocol server for seamless integration with Cursor and other tools.
@@ -38,6 +38,7 @@ This project implements an end-to-end Accessibility CI/CD Audit & Remediation Ag
 6.  **Use the CLI**:
     ```bash
     npm start -- audit <url>
+npm start -- audit <url> --format pdf --output report.pdf
     npm start -- fix <file-path> <line-number>
     ```
 
