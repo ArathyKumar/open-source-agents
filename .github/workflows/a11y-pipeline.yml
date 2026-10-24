@@ -1,9 +1,15 @@
 name: Accessibility Audit & Remediation
 
 on:
-  push: # Runs on every commit pushed to any branch
-  pull_request: # Runs on every commit pushed to an open pull request
+  push:
+    paths:
+      - 'agents/accessibility-agent/demo/index.html'
+      - 'demo/index.html'
+  pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'agents/accessibility-agent/demo/index.html'
+      - 'demo/index.html'
   issue_comment:
     types: [created]
 
@@ -47,12 +53,17 @@ jobs:
       - name: Build Agent
         run: npm run build
 
-      - name: Start Local HTTP Server
+      - name: Start Demo HTTP Server
         run: |
-          npx --yes http-server . -p 8080 &
+          # Serve the directory containing demo/index.html
+          if [ -d "demo" ]; then
+            npx --yes http-server demo -p 8080 &
+          else
+            npx --yes http-server . -p 8080 &
+          fi
           sleep 3
 
-      - name: Run Audit & AI Remediation
+      - name: Run Audit on demo/index.html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
