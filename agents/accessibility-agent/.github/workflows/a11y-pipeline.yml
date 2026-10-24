@@ -1,6 +1,9 @@
 name: Accessibility CI/CD Audit
 
 on:
+  push:
+    paths:
+      - 'demo/index.html'
   pull_request:
     types: [opened, synchronize, reopened]
   issue_comment:
