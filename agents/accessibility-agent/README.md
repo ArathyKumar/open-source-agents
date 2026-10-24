@@ -38,11 +38,33 @@ This project implements an end-to-end Accessibility CI/CD Audit & Remediation Ag
 6.  **Use the CLI**:
     ```bash
     npm start -- audit <url>
-npm start -- audit <url> --format pdf --output report.pdf
+    npm start -- audit <url> --format pdf --output report.pdf
     npm start -- fix <file-path> <line-number>
     ```
 
-## Project Structure
+### Testing with Demo Website
+
+A sample website with various accessibility issues is provided in the `demo/` folder to facilitate testing and verification of the accessibility agent.
+
+**1. Serve the Demo Website:**
+To serve the `index.html` file from the `demo/` folder, open a new terminal, navigate to the `demo/` directory, and use `npx http-server`:
+```bash
+cd ../../demo
+npx http-server
+```
+This will typically serve the demo site at `http://localhost:8080`. Keep this terminal open while testing.
+
+**2. Run Audits against the Demo Website:**
+In the `accessibility-agent` directory, you can now run audits against the locally served demo website:
+```bash
+# Audit and output Markdown
+npm start -- audit http://localhost:8080 --format markdown
+
+# Audit and output PDF
+npm start -- audit http://localhost:8080 --format pdf --output demo-report.pdf
+```
+
+### Project Structure
 
 ```
 agents/accessibility-agent/
