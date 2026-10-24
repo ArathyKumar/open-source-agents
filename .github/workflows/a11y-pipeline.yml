@@ -3,12 +3,14 @@ name: Accessibility Audit & Remediation
 on:
   push:
     paths:
-      - 'agents/accessibility-agent/demo/index.html'
+      - 'agents/accessibility-agent/**'
+      - '.github/workflows/a11y-agent.yml'
       - 'demo/index.html'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'agents/accessibility-agent/demo/index.html'
+      - 'agents/accessibility-agent/**'
+      - '.github/workflows/a11y-agent.yml'
       - 'demo/index.html'
   issue_comment:
     types: [created]
@@ -55,7 +57,6 @@ jobs:
 
       - name: Start Demo HTTP Server
         run: |
-          # Serve the directory containing demo/index.html
           if [ -d "demo" ]; then
             npx --yes http-server demo -p 8080 &
           else
@@ -65,11 +66,16 @@ jobs:
 
       - name: Run Audit on demo/index.html
         env:
+          # Standard environment variables
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_URL: "http://127.0.0.1:8080/"
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
           FIX_REQUESTED: ${{ contains(github.event.comment.body, '/fix-a11y') }}
+
+          # Mappings for @actions/core (core.getInput)
+          INPUT_GITHUB-TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_PREVIEW-URL: "http://127.0.0.1:8080/"
         run: |
           if npm run | grep -q "ci:run"; then
             npm run ci:run
