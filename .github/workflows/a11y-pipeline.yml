@@ -1,0 +1,46 @@
+name: Accessibility CI/CD Audit
+
+on:
+  push:
+    paths:
+      - 'demo/index.html'
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: agents/accessibility-agent
+
+      - name: Run Accessibility Agent GitHub Action
+        uses: ./agents/accessibility-agent/ # Refers to the local action in the repo
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # preview-url: # Uncomment and set if you have a deployment preview URL
+
+  # This job is a placeholder. A real CI/CD setup might have additional jobs
+  # for deploying a preview environment before running the audit.
+  # deploy_preview:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy preview
+  #       run: echo "Deploying preview..."
+  #   outputs:
+  #     preview_url: ${{ steps.deploy.outputs.url }}
