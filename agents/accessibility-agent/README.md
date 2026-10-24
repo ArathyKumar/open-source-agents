@@ -49,7 +49,7 @@ A sample website with various accessibility issues is provided in the `demo/` fo
 **1. Serve the Demo Website:**
 To serve the `index.html` file from the `demo/` folder, open a new terminal, navigate to the `demo/` directory, and use `npx http-server`:
 ```bash
-cd ../../demo
+    cd demo
 npx http-server
 ```
 This will typically serve the demo site at `http://localhost:8080`. Keep this terminal open while testing.
@@ -86,6 +86,7 @@ agents/accessibility-agent/
 │   ├── ci/
 │   │   └── github-action.ts
 │   └── index.ts
+├── demo/
 └── .github/workflows/
     └── a11y-pipeline.yml
 ```
