@@ -25,7 +25,7 @@ async function getPullRequestContext(): Promise<PullRequestContext | null> {
 }
 
 async function postComment(context: PullRequestContext, commentBody: string) {
-  const token = core.getInput('github-token', { required: true });
+  const token = process.env.GITHUB_TOKEN || core.getInput('github-token', { required: true });
   const octokit = github.getOctokit(token);
 
   await octokit.rest.issues.createComment({
@@ -86,7 +86,7 @@ async function main() {
         return;
       }
       // Assuming a deployment preview URL is available
-      const previewUrl = core.getInput('preview-url', { required: false });
+      const previewUrl = process.env.TARGET_URL || core.getInput('preview-url', { required: false });
       if (previewUrl) {
         await runAudit(context, previewUrl);
       } else {
