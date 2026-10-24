@@ -1,46 +1,56 @@
-name: Accessibility CI/CD Audit
+name: Accessibility Audit & Remediation
 
 on:
-  push:
-    paths:
-      - 'demo/index.html'
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main
   issue_comment:
     types: [created]
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 jobs:
-  audit:
+  audit-and-fix:
+    # Trigger on PRs targeting 'main' OR when a comment contains '/fix-a11y'
+    if: >-
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/fix-a11y'))
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+
+    defaults:
+      run:
+        working-directory: agents/accessibility-agent
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: agents/accessibility-agent/package-lock.json
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: agents/accessibility-agent
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
 
-      - name: Run Accessibility Agent GitHub Action
-        uses: ./agents/accessibility-agent/ # Refers to the local action in the repo
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # preview-url: # Uncomment and set if you have a deployment preview URL
+      - name: Build Agent
+        run: npm run build
 
-  # This job is a placeholder. A real CI/CD setup might have additional jobs
-  # for deploying a preview environment before running the audit.
-  # deploy_preview:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy preview
-  #       run: echo "Deploying preview..."
-  #   outputs:
-  #     preview_url: ${{ steps.deploy.outputs.url }}
+      - name: Run Audit & AI Remediation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_URL: "http://127.0.0.1:8080/"
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          FIX_REQUESTED: ${{ contains(github.event.comment.body, '/fix-a11y') }}
+        run: npm run ci:run
