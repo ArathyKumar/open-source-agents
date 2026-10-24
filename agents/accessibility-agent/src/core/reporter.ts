@@ -139,7 +139,7 @@ export function formatAxeResultsAsGitHubPRMarkdown(results: AxeResults): string 
       markdown += `**Help URL**: ${violation.helpUrl}\n`;
       markdown += `**Nodes**:\n`;
       violation.nodes.forEach(node => {
-        markdown += `-   **HTML**: \`\`\`html\\n${node.html}\\n\`\`\`\n`;
+        markdown += `-   **HTML**: \`\`\`html\n${node.html}\n\`\`\`\n`;
         markdown += `    **Target**: \`${node.target.join(', ')}\`\n`;
         if (node.failureSummary) {
           markdown += `    **Failure Summary**: ${node.failureSummary}\n`;
@@ -174,6 +174,30 @@ export function formatAxeResultsAsGitHubPRMarkdown(results: AxeResults): string 
     });
     markdown += `\n`;
   }
+
+  return markdown;
+}
+
+export function formatSuggestedFixesReport(
+  suggestedFixes: { description: string; suggestedFix: string; htmlSnippet: string; }[],
+  format: 'markdown' | 'json' = 'markdown'
+): string {
+  if (format === 'json') {
+    return JSON.stringify(suggestedFixes, null, 2);
+  }
+
+  let markdown = `## Suggested Accessibility Fixes\n\n`;
+
+  if (suggestedFixes.length === 0) {
+    markdown += `No suggested fixes available.\n`;
+    return markdown;
+  }
+
+  suggestedFixes.forEach((fix, index) => {
+    markdown += `### Issue ${index + 1}: ${fix.description}\n`;
+    markdown += `**Original HTML Snippet**:\n\`\`\`html\n${fix.htmlSnippet}\n\`\`\`\n`;
+    markdown += `**Suggested Fix**:\n\`\`\`html\n${fix.suggestedFix}\n\`\`\`\n\n`;
+  });
 
   return markdown;
 }
